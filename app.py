@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 
+import streamlit as st
 from langchain.prompts import PromptTemplate
 from langchain.agents import initialize_agent, Tool
 from langchain.agents import AgentType
@@ -16,7 +17,6 @@ from bs4 import BeautifulSoup
 import requests
 import json
 from langchain.schema import SystemMessage
-from fastapi import FastAPI
 
 load_dotenv()
 browserless_api_key = os.getenv("BROWSERLESS_API_KEY")
@@ -149,7 +149,7 @@ tools = [
     ScrapeWebsiteTool(),
 ]
 
-# # Prompt
+# Base Prompt
 
 system_message = SystemMessage(
     content="""You are a world class researcher, who can do detailed research on any topic and produce facts based results; 
@@ -160,6 +160,51 @@ system_message = SystemMessage(
             2/ If there are url of relevant links & articles, you will scrape it to gather more information
             3/ After scraping & search, you should think "is there any new things i should search & scraping based on the data I collected to increase research quality?" If answer is yes, continue; But don't do this more than 3 iteratins
             4/ You should not make things up, you should only write facts & data that you have gathered
-            5/ In the final output, You should include all reference data & links to back up your research; You should include all reference data & links to back up your research
-            6/ In the final output, You should include all reference data & links to back up your research; You should include all reference data & links to back up your research"""
+            5/ Be as descriptive and structured as possible
+            7/ In the final output, You should include all reference data & links to back up your research; You should include all reference data & links to back up your research
+            8/ In the final output, You should include all reference data & links to back up your research; You should include all reference data & links to back up your research"""
 )
+
+# Args for agents (can be multiple)
+
+agent_kwargs = {
+    "extra_prompt_messages": [MessagesPlaceholder(variable_name="memory")],
+    "system_message": system_message,
+}
+
+# Initiliazing an LLM
+llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo-16k-0613")
+
+# Saving the chat in memory
+memory = ConversationSummaryBufferMemory(
+    memory_key="memory", return_messages=True, llm=llm, max_token_limit=1000)
+
+# Initializing the main agent
+agent = initialize_agent(
+    tools,
+    llm,
+    agent=AgentType.OPENAI_FUNCTIONS, # Test more
+    verbose=True,
+    agent_kwargs=agent_kwargs,
+    memory=memory,
+)
+
+# frontend streamlit code
+
+def main():
+    st.set_page_config(page_title="Research Buddy", page_icon="📃")
+
+    st.header("ResearchBuddy 📃")
+    query = st.text_input("Research goal")
+    if st.button('Start research'):
+        if query:
+            st.write("Doing research for ", query)
+
+            result = agent({"input": query})
+
+            st.info(result['output'])
+        else:
+            st.warning('Enter a query', icon="⁉️")
+
+if __name__ == '__main__':
+    main()
