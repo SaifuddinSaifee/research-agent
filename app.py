@@ -177,13 +177,14 @@ llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo-16k-0613")
 
 # Saving the chat in memory
 memory = ConversationSummaryBufferMemory(
-    memory_key="memory", return_messages=True, llm=llm, max_token_limit=1000)
+    memory_key="memory", return_messages=True, llm=llm, max_token_limit=1000
+)
 
 # Initializing the main agent
 agent = initialize_agent(
     tools,
     llm,
-    agent=AgentType.OPENAI_FUNCTIONS, # Test more
+    agent=AgentType.OPENAI_FUNCTIONS,  # Test more
     verbose=True,
     agent_kwargs=agent_kwargs,
     memory=memory,
@@ -191,20 +192,23 @@ agent = initialize_agent(
 
 # frontend streamlit code
 
+
 def main():
     st.set_page_config(page_title="Research Buddy", page_icon="📃")
 
     st.header("ResearchBuddy 📃")
     query = st.text_input("Research goal")
-    if st.button('Start research'):
+    if st.button("Start research"):
         if query:
             st.write("Doing research for ", query)
 
             result = agent({"input": query})
 
-            st.info(result['output'])
-        else:
-            st.warning('Enter a query', icon="⁉️")
+            response = st.info(result["output"])
 
-if __name__ == '__main__':
+        else:
+            st.warning("Enter a query", icon="⁉️")
+
+
+if __name__ == "__main__":
     main()
