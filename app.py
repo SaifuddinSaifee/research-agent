@@ -111,3 +111,24 @@ def summary(objective, content):
 
     return output
 
+# Handling Multiple inputs from the scrapped website
+
+class ScrapeWebsiteInput(BaseModel):
+    """Inputs for scrape_website"""
+    objective: str = Field(
+        description="The objective & task that users give to the agent")
+    url: str = Field(description="The url of the website to be scraped")
+
+# Handling Multiple url from the scrapped website
+
+class ScrapeWebsiteTool(BaseTool):
+    name = "scrape_website"
+    description = "useful when you need to get data from a website url, passing both url and objective to the function; DO NOT make up any url, the url should only be from the search results"
+    args_schema: Type[BaseModel] = ScrapeWebsiteInput
+
+    def _run(self, objective: str, url: str):
+        return scrape_website(objective, url)
+
+    def _arun(self, url: str):
+        raise NotImplementedError("error here")
+
