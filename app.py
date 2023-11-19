@@ -18,12 +18,17 @@ import requests
 import json
 from langchain.schema import SystemMessage
 
-load_dotenv()
-browserless_api_key = os.getenv("BROWSERLESS_API_KEY")
-serper_api_key = os.getenv("SERP_API_KEY")
+st.set_page_config(page_title="Research Buddy", page_icon="📃")
+st.header("ResearchBuddy 📃")
+OPENAI_API_KEY = st.text_input("Your own OPENAI API Key", type="password")
+
+if OPENAI_API_KEY:
+    load_dotenv()
+    browserless_api_key = os.getenv("BROWSERLESS_API_KEY")
+    serper_api_key = os.getenv("SERP_API_KEY")
+    os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 
 # 1. Tool for search
-
 
 def search(query):
     url = "https://google.serper.dev/search"
@@ -162,7 +167,7 @@ system_message = SystemMessage(
             4/ You should not make things up, you should only write facts & data that you have gathered
             5/ Be as descriptive and structured as possible
             7/ In the final output, You should include all reference data & links to back up your research; You should include all reference data & links to back up your research
-            8/ In the final output, You should include all reference data & links to back up your research; You should include all reference data & links to back up your research"""
+            8/ In the final output, You should include all reference data & links to back up your research; You should include all reference data & links to back up your research, Create a seperate section called 'References' where you will  reference data & links to back up your research."""
 )
 
 # Args for agents (can be multiple)
@@ -194,21 +199,21 @@ agent = initialize_agent(
 
 
 def main():
-    st.set_page_config(page_title="Research Buddy", page_icon="📃")
+        query = st.text_input("Research goal")
+        if st.button("Start research"):
+            if query:
+                st.write("Doing research for ", query)
 
-    st.header("ResearchBuddy 📃")
-    query = st.text_input("Research goal")
-    if st.button("Start research"):
-        if query:
-            st.write("Doing research for ", query)
+                result = agent({"input": query})
 
-            result = agent({"input": query})
+                response = st.info(result["output"])
 
-            response = st.info(result["output"])
-
-        else:
-            st.warning("Enter a query", icon="⁉️")
+            else:
+                st.warning("Enter a query", icon="⁉️")
 
 
 if __name__ == "__main__":
     main()
+
+# Test with
+# Most notable research papers in the field of Mars Rovers
