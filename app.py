@@ -19,7 +19,7 @@ from langchain.schema import SystemMessage
 from fastapi import FastAPI
 
 load_dotenv()
-brwoserless_api_key = os.getenv("BROWSERLESS_API_KEY")
+browserless_api_key = os.getenv("BROWSERLESS_API_KEY")
 serper_api_key = os.getenv("SERP_API_KEY")
 
 # 1. Tool for search
@@ -66,7 +66,7 @@ def scrape_website(objective: str, url: str):
     data_json = json.dumps(data)
 
     # Send the POST request
-    post_url = f"https://chrome.browserless.io/content?token={brwoserless_api_key}"
+    post_url = f"https://chrome.browserless.io/content?token={browserless_api_key}"
     response = requests.post(post_url, headers=headers, data=data_json)
 
     # Check the response status code
@@ -75,38 +75,39 @@ def scrape_website(objective: str, url: str):
         text = soup.get_text()
         print("CONTENT:", text)
 
-        # if len(text) > 10000:
-        #     output = summary(objective, text)
-        #     return output
-        # else:
-        #     return text
+        if len(text) > 10000:
+            output = summary(objective, text)
+            return output
+        else:
+            return text
     else:
         print(f"HTTP request failed with status code {response.status_code}")
 
+# scrape_website("What is langChain", "https://www.langchain.com/") # Test
 
+def summary(objective, content):
+    llm = ChatOpenAI(temperature=0, model="gpt-4-1106-preview")
 
-# def summary(objective, content):
-#     llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo-16k-0613")
+    text_splitter = RecursiveCharacterTextSplitter(
+        separators=["\n\n", "\n"], chunk_size=10000, chunk_overlap=500)
+    docs = text_splitter.create_documents([content])
+    map_prompt = """
+    Write a summary of the following text for {objective}:
+    "{text}"
+    SUMMARY:
+    """
+    map_prompt_template = PromptTemplate(
+        template=map_prompt, input_variables=["text", "objective"])
 
-#     text_splitter = RecursiveCharacterTextSplitter(
-#         separators=["\n\n", "\n"], chunk_size=10000, chunk_overlap=500)
-#     docs = text_splitter.create_documents([content])
-#     map_prompt = """
-#     Write a summary of the following text for {objective}:
-#     "{text}"
-#     SUMMARY:
-#     """
-#     map_prompt_template = PromptTemplate(
-#         template=map_prompt, input_variables=["text", "objective"])
+    summary_chain = load_summarize_chain(
+        llm=llm,
+        chain_type='map_reduce',
+        map_prompt=map_prompt_template,
+        combine_prompt=map_prompt_template,
+        verbose=True
+    )
 
-#     summary_chain = load_summarize_chain(
-#         llm=llm,
-#         chain_type='map_reduce',
-#         map_prompt=map_prompt_template,
-#         combine_prompt=map_prompt_template,
-#         verbose=True
-#     )
+    output = summary_chain.run(input_documents=docs, objective=objective)
 
-#     output = summary_chain.run(input_documents=docs, objective=objective)
+    return output
 
-#     return output
