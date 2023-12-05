@@ -177,23 +177,24 @@ agent_kwargs = {
     "system_message": system_message,
 }
 
-# Initiliazing an LLM
-llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo-16k-0613")
+if OPENAI_API_KEY:
+    # Initiliazing an LLM
+    llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo-16k-0613")
 
-# Saving the chat in memory
-memory = ConversationSummaryBufferMemory(
-    memory_key="memory", return_messages=True, llm=llm, max_token_limit=1000
-)
+    # Saving the chat in memory
+    memory = ConversationSummaryBufferMemory(
+        memory_key="memory", return_messages=True, llm=llm, max_token_limit=1000
+    )
 
-# Initializing the main agent
-agent = initialize_agent(
-    tools,
-    llm,
-    agent=AgentType.OPENAI_FUNCTIONS,  # Test more
-    verbose=True,
-    agent_kwargs=agent_kwargs,
-    memory=memory,
-)
+    # Initializing the main agent
+    agent = initialize_agent(
+        tools,
+        llm,
+        agent=AgentType.OPENAI_FUNCTIONS,  # Test more
+        verbose=True,
+        agent_kwargs=agent_kwargs,
+        memory=memory,
+    )
 
 # frontend streamlit code
 
